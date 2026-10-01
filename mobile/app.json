@@ -1,0 +1,18 @@
+{
+  "expo": {
+    "name": "MessDesk",
+    "slug": "messdesk",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "splash": {
+      "backgroundColor": "#16884e"
+    },
+    "android": {
+      "package": "com.messdesk.app"
+    },
+    "extra": {
+      "apiUrl": "http://127.0.0.1:5001"
+    }
+  }
+}
