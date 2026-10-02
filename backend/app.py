@@ -1,5 +1,5 @@
 import os
-from flask import Flask, jsonify
+from flask import Flask, jsonify, request
 
 from db import init_db
 
@@ -31,11 +31,21 @@ def create_app():
         response.headers["X-Frame-Options"] = "DENY"
         response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
         response.headers["Cache-Control"] = "no-store"
-        # CORS: restrict to the configured frontend origin only
-        origin = os.environ.get("FRONTEND_ORIGIN", "http://localhost:5173")
-        response.headers["Access-Control-Allow-Origin"] = origin
-        response.headers["Access-Control-Allow-Headers"] = "Content-Type, Authorization"
-        response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS"
+
+        # CORS: allow local frontend and production Vercel frontend
+        allowed_origins = {
+            "http://localhost:5173",
+            "https://mess-desk.vercel.app",
+        }
+
+        request_origin = request.headers.get("Origin")
+
+        if request_origin in allowed_origins:
+            response.headers["Access-Control-Allow-Origin"] = request_origin
+            response.headers["Vary"] = "Origin"
+            response.headers["Access-Control-Allow-Headers"] = "Content-Type, Authorization"
+            response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS"
+
         return response
 
     @app.route("/<path:_any>", methods=["OPTIONS"])
@@ -53,7 +63,6 @@ def create_app():
 
     @app.errorhandler(500)
     def server_error(e):
-        # Log internally in production; never expose stack traces/DB errors
         app.logger.exception("Unhandled error")
         return jsonify({"error": "Internal server error"}), 500
 
@@ -68,5 +77,5 @@ app = create_app()
 
 if __name__ == "__main__":
     debug_mode = os.environ.get("FLASK_DEBUG", "false").lower() == "true"
-    port = int(os.environ.get("PORT", "5001"))  # 5001 avoids macOS AirPlay on 5000
+    port = int(os.environ.get("PORT", "5001"))
     app.run(host="127.0.0.1", port=port, debug=debug_mode)
